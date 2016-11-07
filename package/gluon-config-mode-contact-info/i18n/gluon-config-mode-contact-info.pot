@@ -12,3 +12,9 @@ msgstr ""
 
 msgid "e.g. E-mail or phone number"
 msgstr ""
+
+msgid ""
+"You didn't provide any contact information! If you really want to run your "
+"node anonymously, you can enter a blank here. Please tell us an alternative "
+"how we could contact you in case there is anything wrong with your node."
+msgstr ""

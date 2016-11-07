@@ -19,6 +19,20 @@ function M.section(form)
   o.rmempty = not ((site.config_mode or {}).owner or {}).obligatory
   o.datatype = "string"
   o.description = i18n.translate("e.g. E-mail or phone number")
+  o.validate = function(self, val)
+    if val == nil then
+      self.section.error = {
+        [1] = {
+          i18n.translate(
+          'You didn\'t provide any contact information! If you really want to run your '
+          .. 'node anonymously, you can enter a blank here. Please tell us an alternative '
+          .. 'how we could contact you in case there is anything wrong with your node.'
+          )
+        }
+      }
+    end
+    return val
+  end
   o.maxlen = 140
 end
 

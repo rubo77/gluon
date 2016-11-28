@@ -5,6 +5,13 @@ Gluon's source is kept in `git repositories`_ at GitHub.
 
 .. _git repositories: https://github.com/freifunk-gluon
 
+Development Guidelines
+----------------------
+lua should be used instead of sh whenever sensible. The following criteria
+should be considered:
+  - Is the script doing more than just executing external commands? if so, use lua
+  - Is the script parsing/editing json-data? If so, use lua for speed
+
 Bug Tracker
 -----------
 

@@ -1,22 +1,24 @@
 let url = "i18n/de.po"
 
-fetch(url)
-  .then((res) => {
-  return res.body.getReader();
-})
-  .then((reader) => {
-  return reader.read();
-})
-  .then((stream) => {
-  let decoder = new TextDecoder();
-  let body = decoder.decode(stream.value || new Uint8Array);
-  return body
-})
-  .then((body) => {
-  let text = body.replace(/\\n/g, '');
-  let lines = text.split('\n');
+var HttpClient = function() {
+    this.get = function(aUrl, aCallback) {
+        var anHttpRequest = new XMLHttpRequest();
+        anHttpRequest.onreadystatechange = function() { 
+            if (anHttpRequest.readyState == 4 && anHttpRequest.status == 200)
+                aCallback(anHttpRequest.responseText);
+        }
 
-  console.log(text)
+        anHttpRequest.open( "GET", aUrl, true );            
+        anHttpRequest.send( null );
+    }
+}
+
+var client = new HttpClient();
+client.get(url, function(body) {  
+  console.log(body)
+  
+  po = body.replace(/\\n/g, '');
+  let lines = po.split('\n');
   
   let arr = []
   let obj = {}

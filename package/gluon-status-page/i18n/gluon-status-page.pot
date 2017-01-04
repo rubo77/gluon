@@ -1,0 +1,50 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: gluon-status-page\n"
+"PO-Revision-Date: 2017-01-04 12:18+0100\n"
+"Last-Translator: Ruben Barkow <github@r.z11.de>\n"
+"Language-Team: German\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Node"
+msgstr ""
+
+msgid "Distance"
+msgstr ""
+
+msgid "Inactive"
+msgstr ""
+
+msgid "Contact"
+msgstr ""
+
+msgid "Model"
+msgstr ""
+
+msgid "IP address"
+msgstr ""
+
+msgid "Firmware"
+msgstr ""
+
+msgid "Mesh-VPN"
+msgstr ""
+
+msgid "Automatic Updates"
+msgstr ""
+
+msgid "not connected"
+msgstr ""
+
+msgid " Packets/s"
+msgstr ""
+
+msgid "% used"
+msgstr ""
+
+msgid "Statistics"
+msgstr ""

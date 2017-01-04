@@ -19,14 +19,20 @@ msgstr "Entfernung"
 msgid "Inactive"
 msgstr "Inaktiv"
 
+msgid "Nodename"
+msgstr "Knotenname"
+
 msgid "Contact"
-msgstr "Contact"
+msgstr "Kontakt"
 
 msgid "Model"
-msgstr "Model"
+msgstr "Modell"
 
 msgid "IP address"
-msgstr "Primary MAC"
+msgstr "IP Adresse"
+
+msgid "Primary MAC"
+msgstr "Primäre MAC"
 
 msgid "Firmware"
 msgstr "Firmware"
@@ -35,7 +41,7 @@ msgid "Mesh-VPN"
 msgstr "Mesh-VPN"
 
 msgid "Automatic Updates"
-msgstr "Automatic Updates"
+msgstr "Automatische Updates"
 
 msgid "not connected"
 msgstr "nicht verbunden"

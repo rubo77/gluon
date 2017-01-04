@@ -19,6 +19,9 @@ msgstr ""
 msgid "Inactive"
 msgstr ""
 
+msgid "Nodename"
+msgstr ""
+
 msgid "Contact"
 msgstr ""
 
@@ -26,6 +29,9 @@ msgid "Model"
 msgstr ""
 
 msgid "IP address"
+msgstr ""
+
+msgid "Primary MAC"
 msgstr ""
 
 msgid "Firmware"
@@ -40,7 +46,7 @@ msgstr ""
 msgid "not connected"
 msgstr ""
 
-msgid " Packets/s"
+msgid "Packets/s"
 msgstr ""
 
 msgid "% used"

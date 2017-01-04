@@ -42,8 +42,9 @@ client.get(url, function(body) {
       msgobj.msgid = msgid;
 
       // msgstr
-      if (lines[i].indexOf('msgid') !== -1) {
-        let msgstr = lines[i].split(' "')[1].replace(/\"/g, '');
+      if (lines[i+1].indexOf('msgstr') !== -1) {
+        let msgstr = lines[i+1].split(' "')[1].replace(/\"/g, '')
+        if (msgstr=="") msgstr=msgid
         msgobj.msgstr = msgstr;
       }
 

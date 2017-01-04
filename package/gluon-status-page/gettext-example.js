@@ -1,4 +1,7 @@
-let url = "i18n/de.po"
+var lang = navigator.language || navigator.userLanguage
+var url
+if(lang=="de") url = "i18n/de.po"
+else url = "i18n/gluon-status-page.pot"
 
 var HttpClient = function() {
     this.get = function(aUrl, aCallback) {

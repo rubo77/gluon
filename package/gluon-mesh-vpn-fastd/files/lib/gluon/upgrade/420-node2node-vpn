@@ -1,0 +1,44 @@
+#!/usr/bin/lua
+local uci = require('luci.model.uci').cursor()
+local site = require 'gluon.site_config'
+local util = require 'gluon.util'
+
+uci:set('fastd', 'n2n_vpn','fastd')
+uci:set('fastd', 'n2n_vpn','method', site.fastd_mesh_vpn.methods)
+uci:set('fastd', 'n2n_vpn','mtu', site.fastd_mesh_vpn.mtu)
+uci:set('fastd', 'n2n_vpn','group', 'gluon-fastd')
+uci:set('fastd', 'n2n_vpn','syslog_level', 'verbose')
+uci:set('fastd', 'n2n_vpn','mode', 'tap')
+uci:set('fastd', 'n2n_vpn','interface','n2n-vpn')
+-- TODO peer limit auf der seite konfigurierbar machen
+-- TODO: should we use secure handshakes? How?
+uci:set('fastd', 'n2n_vpn','secure_handshakes','0')
+
+local e = uci:get('fastd', 'mesh_vpn', 'enabled')
+if not e then
+	e = '0'
+end
+
+uci:set('fastd', 'n2n_vpn','enabled', e)
+
+uci:section('fastd', 'peer_group', 'n2n_vpn',
+{
+	enabled = e,
+	net = 'n2n_vpn',
+	peer_limit = 3,
+}
+)
+
+uci:section('network', 'interface', 'n2n_vpn',
+{
+	ifname = 'n2n-vpn',
+	proto = 'gluon_mesh',
+	transitive = 1,
+	fixed_mtu = 1,
+	macaddr = util.generate_mac(7),
+}
+)
+
+uci:save('network')
+
+uci:save('fastd')

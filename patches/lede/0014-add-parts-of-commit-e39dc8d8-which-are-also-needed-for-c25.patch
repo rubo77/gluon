@@ -1,0 +1,24 @@
+From: Jan Niehusmann <jan@gondor.com>
+Date: Wed, 10 May 2017 21:48:43 +0200
+Subject: add parts of commit e39dc8d8 which are also needed for c25
+
+diff --git a/target/linux/ar71xx/image/tp-link.mk b/target/linux/ar71xx/image/tp-link.mk
+index 577a7235b6eb5a38707d28cb9e67c9de412892fc..faf3031a18a1250680ccbc8cbb743935ad6d5319 100644
+--- a/target/linux/ar71xx/image/tp-link.mk
++++ b/target/linux/ar71xx/image/tp-link.mk
+@@ -45,6 +45,15 @@ define Build/mktplinkfw-kernel
+ 	@mv $@.new $@
+ endef
+ 
++define Build/uImageArcher
++       mkimage -A $(LINUX_KARCH) \
++               -O linux -T kernel \
++               -C $(1) -a $(KERNEL_LOADADDR) -e $(if $(KERNEL_ENTRY),$(KERNEL_ENTRY),$(KERNEL_LOADADDR)) \
++               -n '$(call toupper,$(LINUX_KARCH)) LEDE Linux-$(LINUX_VERSION)' -d $@ $@.new
++       @mv $@.new $@
++endef
++
++
+ define Device/tplink
+   TPLINK_HWREV := 0x1
+   TPLINK_HEADER_VERSION := 1

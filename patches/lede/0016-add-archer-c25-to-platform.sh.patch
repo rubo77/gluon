@@ -1,0 +1,18 @@
+From: Jan Niehusmann <jan@gondor.com>
+Date: Thu, 11 May 2017 21:52:04 +0200
+Subject: add archer c25 to platform.sh
+
+should fix sysupgrade
+
+diff --git a/target/linux/ar71xx/base-files/lib/upgrade/platform.sh b/target/linux/ar71xx/base-files/lib/upgrade/platform.sh
+index 580e09a46f020babbc908b9a40eeecba0774a828..e2aacebd45ae734975502c519b5466803060fdef 100755
+--- a/target/linux/ar71xx/base-files/lib/upgrade/platform.sh
++++ b/target/linux/ar71xx/base-files/lib/upgrade/platform.sh
+@@ -205,6 +205,7 @@ platform_check_image() {
+ 	airrouter|\
+ 	ap132|\
+ 	ap90q|\
++	archer-c25-v1|\
+ 	bullet-m|\
+ 	c-55|\
+ 	carambola2|\

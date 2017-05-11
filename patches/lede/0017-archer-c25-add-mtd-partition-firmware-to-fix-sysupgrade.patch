@@ -1,0 +1,17 @@
+From: Jan Niehusmann <jan@gondor.com>
+Date: Thu, 11 May 2017 22:57:02 +0200
+Subject: archer c25: add mtd partition 'firmware' to fix sysupgrade
+
+diff --git a/target/linux/ar71xx/image/tp-link.mk b/target/linux/ar71xx/image/tp-link.mk
+index faf3031a18a1250680ccbc8cbb743935ad6d5319..60f97f264c63fc9a35f4d92919418cbd05409918 100644
+--- a/target/linux/ar71xx/image/tp-link.mk
++++ b/target/linux/ar71xx/image/tp-link.mk
+@@ -116,7 +116,7 @@ define Device/archer-c25-v1
+   IMAGES := sysupgrade.bin factory.bin
+   IMAGE/sysupgrade.bin := append-rootfs | tplink-safeloader sysupgrade
+   IMAGE/factory.bin := append-rootfs | tplink-safeloader factory
+-  MTDPARTS := spi0.0:128k(factory-uboot)ro,64k(u-boot)ro,1536k(kernel),6272k(rootfs),128k(config),64k(art)ro
++  MTDPARTS := spi0.0:128k(factory-uboot)ro,64k(u-boot)ro,1536k(kernel),6272k(rootfs),128k(config),64k(art)ro,7808k@0x30000(firmware)
+ endef
+ TARGET_DEVICES += archer-c25-v1
+ 

@@ -8,16 +8,15 @@ return function(form, uci)
 		return
 	end
 
-	local msg = translate(
+	local s = form:section(Section, nil, translate(
 		'Your internet connection can be used to establish a ' ..
-	        'VPN connection with other nodes. ' ..
-	        'Enable this option if there are no other nodes reachable ' ..
-	        'over WLAN in your vicinity or you want to make a part of ' ..
-	        'your connection\'s bandwidth available for the network. You can limit how ' ..
-	        'much bandwidth the node will use at most.'
+			'VPN connection with other nodes. ' ..
+			'Enable this option if there are no other nodes reachable ' ..
+			'over WLAN in your vicinity or you want to make a part of ' ..
+			'your connection\'s bandwidth available for the network. You can limit how ' ..
+			'much bandwidth the node will use at most.'
+		)
 	)
-
-	local s = form:section(Section, nil, msg)
 
 	local o
 

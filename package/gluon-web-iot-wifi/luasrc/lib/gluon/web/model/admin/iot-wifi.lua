@@ -2,15 +2,16 @@ local uci = require("simple-uci").cursor()
 local util = require 'gluon.util'
 
 -- where to read the configuration from
-local primary_iface = 'wan_radio0'
+local primary_iface = 'wan_radio2'
 
-local f = Form(translate("Private WLAN"))
+local f = Form(translate("IoT WLAN"))
 
 local s = f:section(Section, nil, translate(
-	'Your node can additionally extend your private network by bridging the WAN interface '
-	.. 'with a separate WLAN. This feature is completely independent of the mesh functionality. '
-	.. 'Please note that the private WLAN and meshing on the WAN interface should not be enabled '
-	.. 'at the same time.'
+	'Your node can additionally create a separate WLAN that has neither access to '
+	.. 'the internet nor to your private WLAN. This is useful to serve as a local '
+	.. 'Network for IoT devices. This feature is completely independent of '
+	.. 'the mesh functionality. Please note that the IoT WLAN and meshing on the '
+	.. 'WAN interface should not be enabled at the same time.'
 ))
 
 local enabled = s:option(Flag, "enabled", translate("Enabled"))

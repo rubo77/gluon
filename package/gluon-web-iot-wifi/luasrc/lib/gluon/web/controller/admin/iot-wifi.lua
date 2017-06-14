@@ -1,1 +1,1 @@
-entry({"admin", "privatewifi"}, model("admin/privatewifi"), _("Private WLAN"), 10)
+entry({"admin", "iot-wifi"}, model("admin/iot-wifi"), _("IoT WLAN"), 10)

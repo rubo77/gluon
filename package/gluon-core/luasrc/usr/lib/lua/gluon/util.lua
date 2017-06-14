@@ -185,6 +185,7 @@ end
 -- 5: mesh1
 -- 6: ibss1
 -- 7: wan_radio1 (private WLAN); mesh VPN
+-- 8: wan_radio2 (IoT WLAN)
 function generate_mac(i)
 	if i > 7 or i < 0 then return nil end -- max allowed id (0b111)
 

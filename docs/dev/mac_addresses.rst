@@ -16,3 +16,4 @@ Gluon tries to solve this issue by using a hash of the primary MAC address as a
 * 5: mesh1
 * 6: ibss1
 * 7: wan_radio1 (private WLAN); mesh VPN
+* 8: wan_radio2 (IoT WLAN)

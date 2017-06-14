@@ -1,6 +1,6 @@
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=gluon-web-private-wifi
+PKG_NAME:=gluon-web-iot-wifi
 PKG_VERSION:=1
 PKG_RELEASE:=1
 
@@ -11,11 +11,11 @@ include ../gluon.mk
 PKG_CONFIG_DEPENDS += $(GLUON_I18N_CONFIG)
 
 
-define Package/gluon-web-private-wifi
+define Package/gluon-web-iot-wifi
   SECTION:=gluon
   CATEGORY:=Gluon
   DEPENDS:=+gluon-web-admin
-  TITLE:=UI for activating a private WLAN
+  TITLE:=UI for activating an Internt of Things WLAN (IoT)
 endef
 
 define Build/Prepare
@@ -26,13 +26,13 @@ define Build/Configure
 endef
 
 define Build/Compile
-	$(call GluonBuildI18N,gluon-web-private-wifi,i18n)
+	$(call GluonBuildI18N,gluon-web-iot-wifi,i18n)
 	$(call GluonSrcDiet,./luasrc,$(PKG_BUILD_DIR)/luadest/)
 endef
 
-define Package/gluon-web-private-wifi/install
+define Package/gluon-web-iot-wifi/install
 	$(CP) $(PKG_BUILD_DIR)/luadest/* $(1)/
-	$(call GluonInstallI18N,gluon-web-private-wifi,$(1))
+	$(call GluonInstallI18N,gluon-web-iot-wifi,$(1))
 endef
 
-$(eval $(call BuildPackage,gluon-web-private-wifi))
+$(eval $(call BuildPackage,gluon-web-iot-wifi))

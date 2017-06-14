@@ -14,33 +14,33 @@ local s = f:section(Section, nil, translate(
 	.. 'WAN interface should not be enabled at the same time.'
 ))
 
-local enabled = s:option(Flag, "enabled", translate("Enabled"))
-enabled.default = uci:get('wireless', primary_iface) and not uci:get_bool('wireless', primary_iface, "disabled")
+local iot_enabled = s:option(Flag, "iot_enabled", translate("Enabled"))
+iot_enabled.default = uci:get('wireless', primary_iface) and not uci:get_bool('wireless', primary_iface, "disabled")
 
-local ssid = s:option(Value, "ssid", translate("Name (SSID)"))
-ssid:depends(enabled, true)
-ssid.datatype = "maxlength(32)"
-ssid.default = uci:get('wireless', primary_iface, "ssid")
+local iot_ssid = s:option(Value, "iot_ssid", translate("Name (SSID)"))
+iot_ssid:depends(iot_enabled, true)
+iot_ssid.datatype = "maxlength(32)"
+iot_ssid.default = uci:get('wireless', primary_iface, "iot_ssid")
 
-local key = s:option(Value, "key", translate("Key"), translate("8-63 characters"))
-key:depends(enabled, true)
-key.datatype = "wpakey"
-key.default = uci:get('wireless', primary_iface, "key")
+local iot_key = s:option(Value, "iot_key", translate("Key"), translate("8-63 characters"))
+iot_key:depends(iot_enabled, true)
+iot_key.datatype = "wpakey"
+iot_key.default = uci:get('wireless', primary_iface, "iot_key")
 
 function f:write()
 	util.iterate_radios(uci, function(radio, index)
 		local name   = "wan_" .. radio
 
-		if enabled.data then
-			local macaddr = util.get_wlan_mac(uci, radio, index, 4)
+		if iot_enabled.data then
+			local macaddr = util.get_wlan_mac(uci, radio, index, 5)
 
-			uci:section('wireless', "wifi-iface", name, {
+			uci:section('wireless', "iot-iface", name, {
 				device     = radio,
 				network    = "wan",
 				mode       = 'ap',
 				encryption = 'psk2',
-				ssid       = ssid.data,
-				key        = key.data,
+				ssid       = iot_ssid.data,
+				key        = iot_key.data,
 				macaddr    = macaddr,
 				disabled   = false,
 			})

@@ -33,8 +33,6 @@ end
 
 if ((site.config_mode or {}).remote_login or {}).allow_password_login ~= false then
 
-	local min_password_length = ((site.config_mode or {}).remote_login or {}).min_password_length or '8'
-	
 	local f_password = Form(translate("Password"), translate(
 		"Alternatively, you can set a password to access your node. Please choose a "
 		.. "secure password you don't use anywhere else.<br /><br />If you set an empty "
@@ -47,15 +45,15 @@ if ((site.config_mode or {}).remote_login or {}).allow_password_login ~= false t
 
 	local pw1 = s:option(Value, "pw1", translate("Password"))
 	pw1.password = true
-	pw1.datatype = 'minlength(' .. min_password_length .. ')'
+	pw1.datatype = 'minlength(12)'
 	function pw1.cfgvalue()
 		return ''
 	end
 
 	local pw2 = s:option(Value, "pw2", translate("Confirmation"),
-		translate("Minimum") .. " " .. min_password_length .. " " .. translate("characters"))
+		translate("Minimum") .. " " .. 12 .. " " .. translate("characters"))
 	pw2.password = true
-	pw2.datatype = 'minlength(' .. min_password_length .. ')'
+	pw2.datatype = 'minlength(12)'
 	function pw2.cfgvalue()
 		return ''
 	end

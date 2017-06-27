@@ -31,87 +31,86 @@ function keys:write(value)
 	end
 end
 
-if ((site.config_mode or {}).remote_login or {}).allow_password_login ~= false then
-
-	local f_password = Form(translate("Password"), translate(
-		"Alternatively, you can set a password to access your node. Please choose a "
-		.. "secure password you don't use anywhere else.<br /><br />If you set an empty "
-		.. "password, login via password will be disabled. This is the default."
-		), 'password'
-	)
-	f_password.reset = false
-
-	local s = f_password:section(Section)
-
-	local pw1 = s:option(Value, "pw1", translate("Password"))
-	pw1.password = true
-	pw1.datatype = 'minlength(12)'
-	function pw1.cfgvalue()
-		return ''
-	end
-
-	local pw2 = s:option(Value, "pw2", translate("Confirmation"),
-		translate("Minimum") .. " " .. 12 .. " " .. translate("characters"))
-	pw2.password = true
-	pw2.datatype = 'minlength(12)'
-	function pw2.cfgvalue()
-		return ''
-	end
-
-	local function set_password(password)
-		local inr, inw = nixio.pipe()
-		local pid = nixio.fork()
-
-		if pid < 0 then
-			return false
-		elseif pid == 0 then
-			inw:close()
-
-			local null = nixio.open('/dev/null', 'w')
-			nixio.dup(null, nixio.stderr)
-			nixio.dup(null, nixio.stdout)
-			if null:fileno() > 2 then
-				null:close()
-			end
-
-			nixio.dup(inr, nixio.stdin)
-			inr:close()
-
-			nixio.execp('passwd')
-			os.exit(127)
-		end
-
-		inr:close()
-
-		inw:write(string.format('%s\n%s\n', password, password))
-		inw:close()
-
-		local wpid, status, code = nixio.waitpid(pid)
-		return wpid and status == 'exited' and code == 0
-	end
-
-	function f_password:write()
-		if pw1.data ~= pw2.data then
-			f_password.errmessage = translate("The password and the confirmation differ.")
-			return
-		end
-
-		local pw = pw1.data
-
-		if #pw > 0 then
-			if set_password(pw) then
-				f_password.message = translate("Password changed.")
-			else
-				f_password.errmessage = translate("Unable to change the password.")
-			end
-		else
-			-- We don't check the return code here as the error 'password for root is already locked' is normal...
-			os.execute('passwd -l root >/dev/null')
-			f_password.message = translate("Password removed.")
-		end
-	end
-	return f_keys, f_password
-else
+if ((site.config_mode or {}).remote_login or {}).allow_password_login == false then
 	-- password login is disabled in site.conf
 	return f_keys	
 end
+
+local f_password = Form(translate("Password"), translate(
+	"Alternatively, you can set a password to access your node. Please choose a "
+	.. "secure password you don't use anywhere else.<br /><br />If you set an empty "
+	.. "password, login via password will be disabled. This is the default."
+	), 'password'
+)
+f_password.reset = false
+
+local s = f_password:section(Section)
+
+local pw1 = s:option(Value, "pw1", translate("Password"))
+pw1.password = true
+pw1.datatype = 'minlength(12)'
+function pw1.cfgvalue()
+	return ''
+end
+
+local pw2 = s:option(Value, "pw2", translate("Confirmation"),
+	translate("Minimum") .. " " .. 12 .. " " .. translate("characters"))
+pw2.password = true
+pw2.datatype = 'minlength(12)'
+function pw2.cfgvalue()
+	return ''
+end
+
+local function set_password(password)
+	local inr, inw = nixio.pipe()
+	local pid = nixio.fork()
+
+	if pid < 0 then
+		return false
+	elseif pid == 0 then
+		inw:close()
+
+		local null = nixio.open('/dev/null', 'w')
+		nixio.dup(null, nixio.stderr)
+		nixio.dup(null, nixio.stdout)
+		if null:fileno() > 2 then
+			null:close()
+		end
+
+		nixio.dup(inr, nixio.stdin)
+		inr:close()
+
+		nixio.execp('passwd')
+		os.exit(127)
+	end
+
+	inr:close()
+
+	inw:write(string.format('%s\n%s\n', password, password))
+	inw:close()
+
+	local wpid, status, code = nixio.waitpid(pid)
+	return wpid and status == 'exited' and code == 0
+end
+
+function f_password:write()
+	if pw1.data ~= pw2.data then
+		f_password.errmessage = translate("The password and the confirmation differ.")
+		return
+	end
+
+	local pw = pw1.data
+
+	if #pw > 0 then
+		if set_password(pw) then
+			f_password.message = translate("Password changed.")
+		else
+			f_password.errmessage = translate("Unable to change the password.")
+		end
+	else
+		-- We don't check the return code here as the error 'password for root is already locked' is normal...
+		os.execute('passwd -l root >/dev/null')
+		f_password.message = translate("Password removed.")
+	end
+end
+return f_keys, f_password

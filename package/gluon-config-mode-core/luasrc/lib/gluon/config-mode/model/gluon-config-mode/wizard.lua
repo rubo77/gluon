@@ -11,7 +11,8 @@ for _, entry in ipairs(util.glob('/lib/gluon/config-mode/wizard/*')) do
 end
 
 local f = Form(translate("Welcome!"))
-f.submit = translate('Save & restart')
+
+f.submit = translate('Save & Restart')
 f.reset = false
 
 local s = f:section(Section)
@@ -35,6 +36,23 @@ for _, w in ipairs(wizard) do
 	end
 end
 
+local html = [[
+		<div class="gluon-page-actions"><input class="gluon-button gluon-button-submit" value="Save" type="submit" onclick="return no_reboot()" /></div>
+		<script type="text/javascript">
+			setInterval(function() {
+				document.getElementById("value-id.1.9.restart").style.display='none'
+			}, 100);
+			function no_reboot(){
+				document.getElementById("id.1.9.restart").checked = "";
+				return true;
+			}
+		</script>
+]]
+
+local s = f:section(Section, nil, html)
+local restart = s:option(Flag, "restart", translate("Restart the node when saved"))
+restart.default = true
+
 function f:write()
 	local fcntl = require 'posix.fcntl'
 	local unistd = require 'posix.unistd'
@@ -50,7 +68,6 @@ function f:write()
 
 	f.template = "wizard/reboot"
 	f.package = "gluon-config-mode-core"
-	f.hidenav = true
 
 	if unistd.fork() == 0 then
 		-- Replace stdout with /dev/null
@@ -60,8 +77,12 @@ function f:write()
 		-- Sleep a little so the browser can fetch everything required to
 		-- display the reboot page, then reboot the device.
 		unistd.sleep(1)
-
-		unistd.execp('reboot', {[0] = 'reboot'})
+		
+		-- TODO: WIP: this doesn't correctly check the state of the checkbox:
+		if restart then
+			f.hidenav = true
+			unistd.execp('reboot', {[0] = 'reboot'})
+		end
 	end
 end
 

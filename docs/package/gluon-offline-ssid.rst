@@ -67,11 +67,11 @@ disable it with:
 
 ::
 
-    uci set offline-ssid.settings.enabled='0'
+    uci set gluon-offline-ssid.settings.enabled='0'
 
 Or set the timeframe to every three minutes with
 
 ::
 
-    uci set offline-ssid.settings.switch_timeframe='3'
-    uci set offline-ssid.settings.first='3'
+    uci set gluon-offline-ssid.settings.switch_timeframe='3'
+    uci set gluon-offline-ssid.settings.first='3'

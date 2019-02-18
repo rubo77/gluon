@@ -1,1 +1,1 @@
-entry({"admin", "offline-ssid"}, model("admin/offline-ssid"), _("Offline-SSID"), 35)
+entry({"admin", "gluon-offline-ssid"}, model("admin/gluon-offline-ssid"), _("Offline-SSID"), 35)

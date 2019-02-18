@@ -11,16 +11,16 @@ local s = f:section(Section, nil, pkg_i18n.translate(
 ))
 
 local enabled = s:option(Flag, 'enabled', pkg_i18n.translate('Enabled'))
-enabled.default = uci:get_bool('offline-ssid', 'settings', 'enabled')
+enabled.default = uci:get_bool('gluon-offline-ssid', 'settings', 'enabled')
 
 function f:write()
 	if enabled.data then
-		uci:set('offline-ssid', 'settings', 'enabled', '1')
+		uci:set('gluon-offline-ssid', 'settings', 'enabled', '1')
 	else
-		uci:set('offline-ssid', 'settings', 'enabled', '0')
+		uci:set('gluon-offline-ssid', 'settings', 'enabled', '0')
 	end
 
-	uci:commit('offline-ssid')
+	uci:commit('gluon-offline-ssid')
 end
 
 return f

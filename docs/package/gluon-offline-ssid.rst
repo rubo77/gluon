@@ -1,11 +1,11 @@
-gluon-ssid-changer
+gluon-offline-ssid
 ==================
 
 This package adds a script to change the SSID when there is no connection to any
 gateway. This Offline-SSID can be generated from the node's hostname with the
 first and last part of the node name or the MAC address allowing observers to
 recognize which node does not have a connection to a gateway. This script is
-called once every minute by ``micron.d`` and check gateway-connectivity. It will
+called once every minute by ``micrond`` and check gateway-connectivity. It will
 change the SSID to the Offline-SSID after the node lost gateway connectivity for
 several consecutive checks. As soon as the gateway-connectivity is back it
 toggles back to the original SSID.
@@ -41,7 +41,7 @@ Adapt and add this block to your ``site.conf``:
 
 ::
 
-    ssid_changer = {
+    offline_ssid = {
       enabled = true,
       switch_timeframe = 30,    -- only once every timeframe (in minutes) the SSID will change to the Offline-SSID 
                                 -- set to 1440 to change once a day
@@ -62,16 +62,16 @@ Adapt and add this block to your ``site.conf``:
 Commandline options
 ===================
 
-You can configure the ssid-changer on the commandline with ``uci``, for example
+You can configure the offline-ssid on the commandline with ``uci``, for example
 disable it with:
 
 ::
 
-    uci set ssid-changer.settings.enabled='0'
+    uci set offline-ssid.settings.enabled='0'
 
 Or set the timeframe to every three minutes with
 
 ::
 
-    uci set ssid-changer.settings.switch_timeframe='3'
-    uci set ssid-changer.settings.first='3'
+    uci set offline-ssid.settings.switch_timeframe='3'
+    uci set offline-ssid.settings.first='3'

@@ -4,7 +4,7 @@ local uci = require("simple-uci").cursor()
 local util = require 'gluon.util'
 local site = require 'gluon.site'
 
--- TODO:
+-- todo:
 -- pgrep -f autoupdater >/dev/null && safety_exit 'autoupdater running'
 
 function safety_exit(t)
@@ -28,8 +28,8 @@ function file_exists(name)
    if f~=nil then io.close(f) return true else return false end
 end
 
-local UT = util.get_uptime()
-if UT < 60 then
+local ut = util.get_uptime()
+if ut < 60 then
   safety_exit('less than one minute')
 end
 
@@ -51,21 +51,21 @@ function vd(o)
   print (dump(o))
 end
 
--- only once every timeframe minutes the SSID will change to the Offline-SSID
+-- only once every timeframe minutes the ssid will change to the offline-ssid
 -- (set to 1 minute to change immediately every time the router gets offline)
-local MINUTES = uci:get('offline-ssid', 'settings', 'switch_timeframe') or 30
+local minutes = uci:get('offline-ssid', 'settings', 'switch_timeframe') or 30
 
--- the first few minutes directly after reboot within which an Offline-SSID always may be activated
+-- the first few minutes directly after reboot within which an offline-ssid always may be activated
 -- (must be <= switch_timeframe)
-local FIRST = uci:get('offline-ssid', 'settings', 'first') or 5
+local first = uci:get('offline-ssid', 'settings', 'first') or 5
 
--- the Offline-SSID will start with this prefix use something short to leave space for the nodename
+-- the offline-ssid will start with this prefix use something short to leave space for the nodename
 -- (no '~' allowed!)
-local PREFIX = uci:get('offline-ssid', 'settings', 'prefix') or 'FF_Offline_'
+local prefix = uci:get('offline-ssid', 'settings', 'prefix') or 'FF_Offline_'
 
-local DISABLED = '0'
+local disabled = '0'
 if uci:get('offline-ssid', 'settings', 'enabled') then 
-  DISABLED ='1'
+  disabled ='1'
 end
 
 local phys = { length = 0 }
@@ -80,162 +80,162 @@ if phys['length'] == 0 then
   safety_exit('no hostapd-phys')
 end
 
-local SSIDs = { }
+local ssids = { }
 uci:foreach('wireless', 'wifi-iface', function(config)
   if config['mode'] == 'ap' and config['network'] == 'client' then
-    local SSID = config['ssid']
-    if SSID then
-      table.insert(SSIDs, { ssid = SSID , phy = phys[config['device']] })
+    local ssid = config['ssid']
+    if ssid then
+      table.insert(ssids, { ssid = ssid , phy = phys[config['device']] })
     end
   end
 end)
-if #SSIDs == 0 then
-  safety_exit('no SSIDs')
+if #ssids == 0 then
+  safety_exit('no ssids')
 end
--- vd(SSIDs); os.exit()
+-- vd(ssids); os.exit()
 
 -- generate the ssid with either 'nodename', 'mac' or to use only the prefix set to 'none'
-local SETTINGS_SUFFIX = uci:get('offline-ssid', 'settings', 'suffix') or 'nodename'
+local settings_suffix = uci:get('offline-ssid', 'settings', 'suffix') or 'nodename'
 
-local SUFFIX
-if SETTINGS_SUFFIX == 'nodename' then
+local suffix
+if settings_suffix == 'nodename' then
   local pretty_hostname = require 'pretty_hostname'
-  SUFFIX = pretty_hostname.get(uci)
+  suffix = pretty_hostname.get(uci)
   -- 32 would be possible as well
-  if ( string.len(SUFFIX) > 30 - string.len(PREFIX) ) then
+  if ( string.len(suffix) > 30 - string.len(prefix) ) then
     -- calculate the length of the first part of the node identifier in the offline-ssid
-    local HALF = math.floor((28 - string.len(PREFIX) ) / 2)
+    local half = math.floor((28 - string.len(prefix) ) / 2)
     -- jump to this charakter for the last part of the name
-    local SKIP = string.len(SUFFIX) - HALF
+    local skip = string.len(suffix) - half
     -- use the first and last part of the nodename for nodes with long name
-    SUFFIX =string.sub(SUFFIX,0,HALF) .. '...' .. string.sub(SUFFIX, SKIP)
+    suffix =string.sub(suffix,0,half) .. '...' .. string.sub(suffix, skip)
   end
-elseif SETTINGS_SUFFIX == 'mac' then
-  SUFFIX = util.get_wlan_mac(uci, radio, index, 2)
+elseif settings_suffix == 'mac' then
+  suffix = util.get_wlan_mac(uci, radio, index, 2)
   if not macaddr then
     return
   end
 else
   -- 'none'
-  local SUFFIX=''
+  local suffix=''
 end
-local OFFLINE_SSID=PREFIX .. SUFFIX
+local offline_ssid=prefix .. suffix
 
 -- temp file to count the offline incidents during switch_timeframe
-local TMP='/tmp/offline-ssid-count'
-local OFF_COUNT='0'
-if not file_exists(TMP) then 
-  local f = io.open(TMP, 'w+')
+local tmp='/tmp/offline-ssid-count'
+local off_count='0'
+if not file_exists(tmp) then 
+  local f = io.open(tmp, 'w+')
   f:write('0')
 else
-  OFF_COUNT = tonumber(util.readfile(TMP))
+  off_count = tonumber(util.readfile(tmp))
 end
 
--- if TQ_LIMIT_ENABLED is true, the offline ssid will only be set if there is no gateway reacheable
+-- if tq_limit_enabled is true, the offline ssid will only be set if there is no gateway reacheable
 -- upper and lower limit to turn the offline_ssid on and off
--- in-between these two values the SSID will never be changed to preven it from toggeling every Minute.
-local TQ_LIMIT_ENABLED = uci:get('offline-ssid', 'settings', 'tq_limit_enabled') or '0'
+-- in-between these two values the ssid will never be changed to preven it from toggeling every minute.
+local tq_limit_enabled = uci:get('offline-ssid', 'settings', 'tq_limit_enabled') or '0'
 
-local CHECK
-if ( TQ_LIMIT_ENABLED == 1 ) then
-  --  upper limit, above that the online SSID will be used
-  local TQ_LIMIT_MAX = uci:get('offline-ssid', 'settings', 'tq_limit_max') or '45'
-  --  lower limit, below that the offline SSID will be used
-  local TQ_LIMIT_MIN = uci:get('offline-ssid', 'settings', 'tq_limit_min') or '35'
+local check
+if ( tq_limit_enabled == 1 ) then
+  --  upper limit, above that the online ssid will be used
+  local tq_limit_max = uci:get('offline-ssid', 'settings', 'tq_limit_max') or '45'
+  --  lower limit, below that the offline ssid will be used
+  local tq_limit_min = uci:get('offline-ssid', 'settings', 'tq_limit_min') or '35'
   -- grep the connection quality of the currently used gateway
-  local GATEWAY_TQ=shell_exec('batctl gwl | grep -e "^=>" -e "^\*" | awk -F \'[()]\' \'{print $2}\' | tr -d " "')
-  if ( GATEWAY_TQ == '' ) then
+  local gateway_tq=shell_exec('batctl gwl | grep -e "^=>" -e "^\*" | awk -F \'[()]\' \'{print $2}\' | tr -d " "')
+  if ( gateway_tq == '' ) then
     -- there is no gateway
-    local GATEWAY_TQ = 0
+    local gateway_tq = 0
   end
-  local MSG="TQ is " .. GATEWAY_TQ
+  local msg="tq is " .. gateway_tq
 
-  if ( GATEWAY_TQ >= TQ_LIMIT_MAX ) then
-    CHECK = 1
-  elseif ( GATEWAY_TQ < TQ_LIMIT_MIN ) then
-    CHECK = 0
+  if ( gateway_tq >= tq_limit_max ) then
+    check = 1
+  elseif ( gateway_tq < tq_limit_min ) then
+    check = 0
   else
     -- this is just get a clean run if we are in-between the grace periode
-    print("TQ is " .. GATEWAY_TQ .. ", do nothing")
+    print("tq is " .. gateway_tq .. ", do nothing")
     os.exit(0)
   end
 else
-  local MSG = ""
-  CHECK=tonumber(shell_exec('batctl gwl -H | grep -v "gateways in range" -c'))
+  local msg = ""
+  check=tonumber(shell_exec('batctl gwl -H | grep -v "gateways in range" -c'))
 end
 
-local UP = UT / 60
-local M = UP % MINUTES
+local up = ut / 60
+local m = up % minutes
 
-local HUP_NEEDED = 0
+local hup_needed = 0
 
-if CHECK > 0 or DISABLED == '1' then
+if check > 0 or disabled == '1' then
   print("node is online")
   -- check status for all physical devices
-  -- TODO: real loop over phy
-  for SSID in SSIDs do
-    CURRENT_SSID=shell_exec('grep "^ssid=' .. OFFLINE_SSID .. '" ' .. HOSTAPD .. ' | cut -d"=" -f2)"')
-    if CURRENT_SSID == ONLINE_SSID then
-      print("SSID $CURRENT_SSID is correct, nothing to do")
+  -- todo: real loop over phy
+  for ssid in ssids do
+    current_ssid=shell_exec('grep "^ssid=' .. offline_ssid .. '" ' .. hostapd .. ' | cut -d"=" -f2)"')
+    if current_ssid == online_ssid then
+      print("ssid $current_ssid is correct, nothing to do")
       break
     end
-    if CURRENT_SSID == OFFLINE_SSID then
+    if current_ssid == offline_ssid then
       -- set online
-      shell_exec('logger -s -t "gluon-offline-ssid" -p 5 ' .. MSG .. '"SSID is ' .. CURRENT_SSID .. ', change to ' .. ONLINE_SSID .. '"')
-      shell_exec('sed -i "s~^ssid=' .. CURRENT_SSID .. '~ssid=' .. ONLINE_SSID .. '~" ' .. HOSTAPD .. '')
-      -- HUP here would be to early for dualband devices
-      HUP_NEEDED=1
+      shell_exec('logger -s -t "gluon-offline-ssid" -p 5 ' .. msg .. '"ssid is ' .. current_ssid .. ', change to ' .. online_ssid .. '"')
+      shell_exec('sed -i "s~^ssid=' .. current_ssid .. '~ssid=' .. online_ssid .. '~" ' .. hostapd .. '')
+      -- hup here would be to early for dualband devices
+      hup_needed=1
     else
-      shell_exec('logger -s -t "gluon-offline-ssid" -p 5 "could not set to online state: did neither find SSID ' .. ONLINE_SSID .. ' nor ' .. OFFLINE_SSID .. '. Please reboot"')
+      shell_exec('logger -s -t "gluon-offline-ssid" -p 5 "could not set to online state: did neither find ssid ' .. online_ssid .. ' nor ' .. offline_ssid .. '. please reboot"')
     end
   end
-elseif CHECK == 0 then
+elseif check == 0 then
   print("node is considered offline")
-  if UP < FIRST or M == 0 then
-    -- set SSID offline, only if uptime is less than FIRST or exactly a multiplicative of switch_timeframe
-    if UP < FIRST then 
-      T=FIRST
+  if up < first or m == 0 then
+    -- set ssid offline, only if uptime is less than first or exactly a multiplicative of switch_timeframe
+    if up < first then 
+      t=first
     else
-      T=MINUTES
+      t=minutes
     end
-    -- print("Minute M, check if OFF_COUNT is more than half of " .. T )
-    if OFF_COUNT >= T / 2 then
-      -- node was offline more times than half of switch_timeframe (or than FIRST)
-      -- TODO: real loop over phy
-      for HOSTAPD in phys do
-        ONLINE_SSID=shell_exec(ONLINE_SSIDs .. ' | awk -F \'~\' -v l=' .. (LOOP*2) .. ' \'{print $l}')
-        CURRENT_SSID=shell_exec('grep "^ssid=' .. OFFLINE_SSID .. '" ' .. HOSTAPD .. ' | cut -d"=" -f2)"')
-        if CURRENT_SSID == OFFLINE_SSID then
-          print("SSID ' .. CURRENT_SSID .. ' is correct, nothing to do")
+    -- print("minute m, check if off_count is more than half of " .. t )
+    if off_count >= t / 2 then
+      -- node was offline more times than half of switch_timeframe (or than first)
+      -- todo: real loop over phy
+      for hostapd in phys do
+        online_ssid=shell_exec(online_ssids .. ' | awk -f \'~\' -v l=' .. (loop*2) .. ' \'{print $l}')
+        current_ssid=shell_exec('grep "^ssid=' .. offline_ssid .. '" ' .. hostapd .. ' | cut -d"=" -f2)"')
+        if current_ssid == offline_ssid then
+          print("ssid ' .. current_ssid .. ' is correct, nothing to do")
           break
         end
-        CURRENT_SSID=shell_exec('grep "^ssid=' .. ONLINE_SSID .. '" ' .. HOSTAPD .. ' | cut -d"=" -f2)"')
-        if CURRENT_SSID == ONLINE_SSID then
+        current_ssid=shell_exec('grep "^ssid=' .. online_ssid .. '" ' .. hostapd .. ' | cut -d"=" -f2)"')
+        if current_ssid == online_ssid then
           -- set offline
-          shell_exec('logger -s -t "gluon-offline-ssid" -p 5 ' .. MSG .. '"' .. OFF_COUNT .. ' times offline, SSID is ' .. CURRENT_SSID .. ', change to ' .. OFFLINE_SSID .. '"')
-          shell_exec('sed -i "s~^ssid=' .. ONLINE_SSID .. '~ssid=' .. OFFLINE_SSID .. '~" ' .. HOSTAPD .. '')
-          HUP_NEEDED=1
+          shell_exec('logger -s -t "gluon-offline-ssid" -p 5 ' .. msg .. '"' .. off_count .. ' times offline, ssid is ' .. current_ssid .. ', change to ' .. offline_ssid .. '"')
+          shell_exec('sed -i "s~^ssid=' .. online_ssid .. '~ssid=' .. offline_ssid .. '~" ' .. hostapd .. '')
+          hup_needed=1
         else
-          shell_exec('logger -s -t "gluon-offline-ssid" -p 5 "could not set to offline state: did neither endnd SSID ' .. ONLINE_SSID .. ' nor ' .. OFFLINE_SSID .. '. Please reboot"')
+          shell_exec('logger -s -t "gluon-offline-ssid" -p 5 "could not set to offline state: did neither endnd ssid ' .. online_ssid .. ' nor ' .. offline_ssid .. '. please reboot"')
         end
       end
     end
-    -- else print("Minute ' .. M .. ', just count ' .. OFF_COUNT .. '")
+    -- else print("minute ' .. m .. ', just count ' .. off_count .. '")
   end
   
-  local f = io.open(TMP, 'w+')
-  f:write(OFF_COUNT + 1)
+  local f = io.open(tmp, 'w+')
+  f:write(off_count + 1)
 end
 
-if HUP_NEEDED == 1 then
-  -- send HUP to all hostapd to load the new SSID
-  shell_exec('killall -HUP hostapd')
-  HUP_NEEDED=0
-  print("HUP!")
+if hup_needed == 1 then
+  -- send hup to all hostapd to load the new ssid
+  shell_exec('killall -hup hostapd')
+  hup_needed=0
+  print("hup!")
 end
 
-if M == 0 then
+if m == 0 then
   -- set counter to 0 if the timeframe is over
-  local f = io.open(TMP, 'w+')
+  local f = io.open(tmp, 'w+')
   f:write('0')
 end

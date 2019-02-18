@@ -15,9 +15,7 @@ enabled.default = uci:get_bool('offline-ssid', 'settings', 'enabled')
 
 function f:write()
 	if enabled.data then
-		uci:section('offline-ssid', 'settings', 'settings', {
-			enabled = '1'
-		})
+		uci:set('offline-ssid', 'settings', 'enabled', '1')
 	else
 		uci:set('offline-ssid', 'settings', 'enabled', '0')
 	end

@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gluon-offline-ssid
-PKG_VERSION:=6
+PKG_VERSION:=7
 
 include ../gluon.mk
 

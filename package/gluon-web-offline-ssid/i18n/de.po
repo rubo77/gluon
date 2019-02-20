@@ -15,7 +15,7 @@ msgstr "Aktiviert"
 
 msgid ""
 "Here you can enable to automatically change the SSID to the Offline-SSID "
-"when the node has no connection to the selected Gateway."
+"when the node has no connection to the selected gateway."
 msgstr ""
 "Hier kannst du aktivieren, dass dein Knoten automatisch die SSID auf die "
 "Offline-SSID ändert, wenn keine Verbindung zu Freifunk Servern besteht.<br /><br />"

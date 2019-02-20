@@ -8,19 +8,16 @@ function safety_exit(t)
   os.exit(2)
 end
 
--- return_value is optional to return instead of the output
+-- return_value is optional to return the exit code of the shell command instead of the output
 function shell_exec(command, return_value)
   if return_value then
     return os.execute(command .. ' &> /dev/null')
-  end 
+  end
+  -- maybe use util.exec() instead, which does not use assert()
   local file = assert(io.popen(command, 'r'))
   local output = file:read('*all')
   file:close()
   return output
-end
-
-if shell_exec('pgrep -f autoupdater', true) == 0 then
-  safety_exit("autoupdater running")
 end
 
 function logger(m)
@@ -38,27 +35,23 @@ if ut < 60 then
 end
 
 -- debug:
-function dump(o)
-   if type(o) == 'table' then
-      local s = '{ '
-      for k, v in pairs(o) do
-         if type(k) ~= 'number' then k = '"'..k..'"' end
-         s = s .. '['..k..'] = ' .. dump(v) .. ','
-      end
-      return s .. '} ' .. "\n"
-   else
-      return tostring(o)
-   end
-end
+-- function dump(o)
+--    if type(o) == 'table' then
+--       local s = '{ '
+--       for k, v in pairs(o) do
+--          if type(k) ~= 'number' then k = '"'..k..'"' end
+--          s = s .. '['..k..'] = ' .. dump(v) .. ','
+--       end
+--       return s .. '} ' .. "\n"
+--    else
+--       return tostring(o)
+--    end
+-- end
 
 -- debug:
-function vd(o)
-  print (dump(o))
-end
-
-function str_trim(s)
-   return s:match "^%s*(.-)%s*$"
-end
+-- function vd(o)
+--   print (dump(o))
+-- end
 
 -- only once every timeframe minutes the ssid will change to the offline-ssid
 -- (set to 1 minute if you want to change immediately every time the router gets offline)
@@ -118,7 +111,8 @@ if settings_suffix == 'nodename' then
     suffix = string.sub(suffix,0,half) .. '...' .. string.sub(suffix, skip)
   end
 elseif settings_suffix == 'mac' then
-  suffix = uci:get('wireless', 'client_radio0', 'macaddr')
+  local sysconfig = require 'gluon.sysconfig'
+  suffix = sysconfig.primary_mac
 else
   -- 'none'
   suffix = ''
@@ -179,6 +173,7 @@ local ssid_grep = 'grep "^ssid='
 
 -- debug:
 -- check=0 -- set this to set the node always offline
+
 if check > 0 or disabled then
   print("node is online")
   -- check status for all physical devices
@@ -197,7 +192,7 @@ if check > 0 or disabled then
         logger('misconfiguration: did neither find ssid ' .. ssid.ssid .. ' nor ' .. offline_ssid .. '. please reboot')
       end
       
-      local current_ssid = str_trim(shell_exec(ssid_grep .. '" ' .. hostapd .. ' | cut -d"=" -f2'))
+      local current_ssid = util.trim(shell_exec(ssid_grep .. '" ' .. hostapd .. ' | cut -d"=" -f2'))
       -- TODO: replace ~ in current_ssid and ssid.ssid
       
       logger(msg .. ' - ssid is ' .. current_ssid .. ', change to ' .. ssid.ssid)
@@ -217,7 +212,7 @@ elseif check == 0 then
       -- node was offline more times than half of switch_timeframe (or than first)
       for _, ssid in ipairs(ssids) do
         local hostapd = '/var/run/hostapd-' .. ssid.phy .. '.conf'
-        local current_ssid = str_trim(shell_exec(ssid_grep .. '" ' .. hostapd .. ' | cut -d"=" -f2'))
+        local current_ssid = util.trim(shell_exec(ssid_grep .. '" ' .. hostapd .. ' | cut -d"=" -f2'))
         
         -- first grep for offline_ssid in hostapd file
         if shell_exec(ssid_grep .. offline_ssid .. '" ' .. hostapd, true) == 0 then

@@ -23,6 +23,10 @@ if shell_exec('pgrep -f autoupdater', true) == 0 then
   safety_exit("autoupdater running")
 end
 
+function logger(m)
+  shell_exec('logger -s -t "gluon-offline-ssid" -p 5 "' .. m .. '"')
+end
+
 function file_exists(name)
    local f = io.open(name, "r")
    return f ~= nil and io.close(f)
@@ -66,7 +70,7 @@ local first = tonumber(uci:get('gluon-offline-ssid', 'settings', 'first') or '5'
 
 -- the offline-ssid will start with this prefix use something short to leave space for the nodename
 -- (no '~' allowed!)
-local prefix = uci:get('gluon-offline-ssid', 'settings', 'prefix') or 'FF_Offline_'
+local prefix = uci:get('gluon-offline-ssid', 'settings', 'prefix') or 'Offline_'
 
 local disabled = uci:get('gluon-offline-ssid', 'settings', 'enabled') == '0' or false
 if disabled then 
@@ -155,7 +159,7 @@ if ( tq_limit_enabled == 1 ) then
   elseif ( gateway_tq < tq_limit_min ) then
     check = 0
   else
-    -- get a clean run if we are in-between the grace periode
+    -- get a clean run if we are in-between the grace period
     print(msg .. ", do nothing")
     os.exit(0)
   end
@@ -171,6 +175,7 @@ local m = math.floor(up % minutes)
 print("uptime in minutes:"..up..", every "..minutes.." minutes, countdown:"..m)
 
 local hup_needed = 0
+local ssid_grep = 'grep "^ssid='
 
 -- debug:
 -- check=0 -- set this to set the node always offline
@@ -179,23 +184,25 @@ if check > 0 or disabled then
   -- check status for all physical devices
   for _, ssid in ipairs(ssids) do
     local hostapd = '/var/run/hostapd-' .. ssid.phy .. '.conf'
-    local grep = 'grep "^ssid='
-    local current_ssid = str_trim(shell_exec(grep .. '" ' .. hostapd .. ' | cut -d"=" -f2'))
-    local offline_ssid_in_phy = ( shell_exec(grep .. offline_ssid .. '" ' .. hostapd, true) == 0 )
-    local online_ssid_in_phy = ( shell_exec(grep .. ssid.ssid .. '" ' .. hostapd, true) == 0 )
-    if online_ssid_in_phy then
+    
+    -- first grep for online-SSID in hostapd file
+    if shell_exec(ssid_grep .. ssid.ssid .. '" ' .. hostapd, true) == 0 then
       print("current ssid is correct")
       break
-    end
-    if offline_ssid_in_phy then
-      -- set online
-      shell_exec('logger -s -t "gluon-offline-ssid" -p 5 ' .. msg .. '"ssid is ' .. current_ssid .. ', change to ' .. ssid.ssid .. '"')
-      -- TODO: replace ~ in current_ssid and ssid.ssid
-      shell_exec('sed -i "s~^ssid=' .. current_ssid .. '~ssid=' .. ssid.ssid .. '~" ' .. hostapd)
-      -- hup here would be to early for dualband devices
-      hup_needed = 1
     else
-      shell_exec('logger -s -t "gluon-offline-ssid" -p 5 "could not set to online state: did neither find ssid ' .. ssid.ssid .. ' nor ' .. offline_ssid .. '. please reboot"')
+      -- set online
+      
+      -- debug: grep for offline_ssid in hostapd file
+      if shell_exec(ssid_grep .. offline_ssid .. '" ' .. hostapd, true) ~= 0 then
+        logger('misconfiguration: did neither find ssid ' .. ssid.ssid .. ' nor ' .. offline_ssid .. '. please reboot')
+      end
+      
+      local current_ssid = str_trim(shell_exec(ssid_grep .. '" ' .. hostapd .. ' | cut -d"=" -f2'))
+      -- TODO: replace ~ in current_ssid and ssid.ssid
+      
+      logger(msg .. ' - ssid is ' .. current_ssid .. ', change to ' .. ssid.ssid)
+      shell_exec('sed -i "s~^ssid=' .. current_ssid .. '~ssid=' .. ssid.ssid .. '~" ' .. hostapd)
+      hup_needed = 1
     end
   end
 elseif check == 0 then
@@ -210,21 +217,23 @@ elseif check == 0 then
       -- node was offline more times than half of switch_timeframe (or than first)
       for _, ssid in ipairs(ssids) do
         local hostapd = '/var/run/hostapd-' .. ssid.phy .. '.conf'
-        local grep = 'grep "^ssid='
-        local current_ssid = str_trim(shell_exec(grep .. '" ' .. hostapd .. ' | cut -d"=" -f2'))
-        local offline_ssid_in_phy = ( shell_exec(grep .. offline_ssid .. '" ' .. hostapd, true) == 0 )
-        local online_ssid_in_phy = ( shell_exec(grep .. ssid.ssid .. '" ' .. hostapd, true) == 0 )
-        if offline_ssid_in_phy then
+        local current_ssid = str_trim(shell_exec(ssid_grep .. '" ' .. hostapd .. ' | cut -d"=" -f2'))
+        
+        -- first grep for offline_ssid in hostapd file
+        if shell_exec(ssid_grep .. offline_ssid .. '" ' .. hostapd, true) == 0 then
           print('ssid ' .. current_ssid .. ' is correct')
           break
-        end
-        if online_ssid_in_phy then
+        else
           -- set offline
-          shell_exec('logger -s -t "gluon-offline-ssid" -p 5 ' .. msg .. '"' .. off_count .. ' times offline, ssid is ' .. current_ssid .. ', change to ' .. offline_ssid .. '"')
+          
+          -- debug: grep for online-SSID in hostapd file
+          if shell_exec(ssid_grep .. ssid.ssid .. '" ' .. hostapd, true) == 0 then
+            logger('misconfiguration: did neither find ssid ' .. ssid.ssid .. ' nor ' .. offline_ssid .. '. please reboot')
+          end
+      
+          logger(msg .. ' - ' off_count .. ' times offline, ssid is ' .. current_ssid .. ', change to ' .. offline_ssid)
           shell_exec('sed -i "s~^ssid=' .. ssid.ssid .. '~ssid=' .. offline_ssid .. '~" ' .. hostapd)
           hup_needed = 1
-        else
-          shell_exec('logger -s -t "gluon-offline-ssid" -p 5 "could not set to offline state: did neither find ssid ' .. ssid.ssid .. ' nor ' .. offline_ssid .. '. please reboot"')
         end
       end
     end
@@ -237,7 +246,6 @@ end
 if hup_needed == 1 then
   -- send hup to all hostapd to load the new ssid
   shell_exec('killall -hup hostapd')
-  hup_needed = 0
   print("hup!")
 end
 

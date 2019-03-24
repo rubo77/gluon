@@ -1,4 +1,4 @@
-need_boolean({'offline_ssid', 'enabled'}, false)
+need_boolean({'offline_ssid', 'disabled'}, false)
 need_number({'offline_ssid', 'switch_timeframe'}, false)
 need_number({'offline_ssid', 'first'}, false)
 need_string({'offline_ssid', 'prefix'}, false)

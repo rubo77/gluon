@@ -65,7 +65,7 @@ local first = tonumber(uci:get('gluon-offline-ssid', 'settings', 'first') or '5'
 -- (no '~' allowed!)
 local prefix = uci:get('gluon-offline-ssid', 'settings', 'prefix') or 'Offline_'
 
-local disabled = uci:get('gluon-offline-ssid', 'settings', 'enabled') == '0' or false
+local disabled = uci:get('gluon-offline-ssid', 'settings', 'disabled') == '1' or false
 if disabled then 
   print("offline-ssid is disabled")
 end

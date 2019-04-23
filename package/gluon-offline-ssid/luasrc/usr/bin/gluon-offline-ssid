@@ -8,20 +8,8 @@ function safety_exit(t)
   os.exit(2)
 end
 
--- return_value is optional to return the exit code of the shell command instead of the output
-function shell_exec(command, return_value)
-  if return_value then
-    return os.execute(command .. ' &> /dev/null')
-  end
-  -- maybe use util.exec() instead, which does not use assert()
-  local file = assert(io.popen(command, 'r'))
-  local output = file:read('*all')
-  file:close()
-  return output
-end
-
 function logger(m)
-  shell_exec('logger -s -t "gluon-offline-ssid" -p 5 "' .. m .. '"')
+  os.execute('logger -s -t "gluon-offline-ssid" -p 5 "' .. m .. '"')
 end
 
 function file_exists(name)
@@ -33,25 +21,6 @@ local ut = util.get_uptime()
 if ut < 60 then
   safety_exit('less than one minute')
 end
-
--- debug:
--- function dump(o)
---    if type(o) == 'table' then
---       local s = '{ '
---       for k, v in pairs(o) do
---          if type(k) ~= 'number' then k = '"'..k..'"' end
---          s = s .. '['..k..'] = ' .. dump(v) .. ','
---       end
---       return s .. '} ' .. "\n"
---    else
---       return tostring(o)
---    end
--- end
-
--- debug:
--- function vd(o)
---   print (dump(o))
--- end
 
 -- only once every timeframe minutes the ssid will change to the offline-ssid
 -- (set to 1 minute if you want to change immediately every time the router gets offline)
@@ -141,7 +110,7 @@ if ( tq_limit_enabled == 1 ) then
   --  lower limit, below that the offline ssid will be used
   local tq_limit_min = tonumber(uci:get('gluon-offline-ssid', 'settings', 'tq_limit_min') or '35')
   -- grep the connection quality of the currently used gateway
-  local gateway_tq = shell_exec('batctl gwl | grep -e "^=>" -e "^\*" | awk -F \'[()]\' \'{print $2}\' | tr -d " "')
+  local gateway_tq = util.exec('batctl gwl | grep -e "^=>" -e "^\*" | awk -F \'[()]\' \'{print $2}\' | tr -d " "')
   if ( gateway_tq == '' ) then
     -- there is no gateway
     local gateway_tq = 0
@@ -159,7 +128,7 @@ if ( tq_limit_enabled == 1 ) then
   end
 else
   msg = ""
-  check = tonumber(shell_exec('batctl gwl -H | grep -v "gateways in range" -c'))
+  check = os.execute('batctl gwl -H | grep -v "gateways in range"')
 end
 
 local up = ut / 60
@@ -181,22 +150,22 @@ if check > 0 or disabled then
     local hostapd = '/var/run/hostapd-' .. ssid.phy .. '.conf'
     
     -- first grep for online-SSID in hostapd file
-    if shell_exec(ssid_grep .. ssid.ssid .. '" ' .. hostapd, true) == 0 then
+    if os.execute(ssid_grep .. ssid.ssid .. '" ' .. hostapd) == 0 then
       print("current ssid is correct")
       break
     else
       -- set online
       
       -- debug: grep for offline_ssid in hostapd file
-      if shell_exec(ssid_grep .. offline_ssid .. '" ' .. hostapd, true) ~= 0 then
+      if os.execute(ssid_grep .. offline_ssid .. '" ' .. hostapd) ~= 0 then
         logger('misconfiguration: did neither find ssid ' .. ssid.ssid .. ' nor ' .. offline_ssid .. '. please reboot')
       end
       
-      local current_ssid = util.trim(shell_exec(ssid_grep .. '" ' .. hostapd .. ' | cut -d"=" -f2'))
+      local current_ssid = util.trim(util.exec(ssid_grep .. '" ' .. hostapd .. ' | cut -d"=" -f2'))
       -- TODO: replace ~ in current_ssid and ssid.ssid
       
       logger(msg .. ' - ssid is ' .. current_ssid .. ', change to ' .. ssid.ssid)
-      shell_exec('sed -i "s~^ssid=' .. current_ssid .. '~ssid=' .. ssid.ssid .. '~" ' .. hostapd)
+      os.execute('sed -i "s~^ssid=' .. current_ssid .. '~ssid=' .. ssid.ssid .. '~" ' .. hostapd)
       hup_needed = 1
     end
   end
@@ -212,22 +181,22 @@ elseif check == 0 then
       -- node was offline more times than half of switch_timeframe (or than first)
       for _, ssid in ipairs(ssids) do
         local hostapd = '/var/run/hostapd-' .. ssid.phy .. '.conf'
-        local current_ssid = util.trim(shell_exec(ssid_grep .. '" ' .. hostapd .. ' | cut -d"=" -f2'))
+        local current_ssid = util.trim(util.exec(ssid_grep .. '" ' .. hostapd .. ' | cut -d"=" -f2'))
         
         -- first grep for offline_ssid in hostapd file
-        if shell_exec(ssid_grep .. offline_ssid .. '" ' .. hostapd, true) == 0 then
+        if os.execute(ssid_grep .. offline_ssid .. '" ' .. hostapd) == 0 then
           print('ssid ' .. current_ssid .. ' is correct')
           break
         else
           -- set offline
           
           -- debug: grep for online-SSID in hostapd file
-          if shell_exec(ssid_grep .. ssid.ssid .. '" ' .. hostapd, true) == 0 then
+          if os.execute(ssid_grep .. ssid.ssid .. '" ' .. hostapd) == 0 then
             logger('misconfiguration: did neither find ssid ' .. ssid.ssid .. ' nor ' .. offline_ssid .. '. please reboot')
           end
       
           logger(msg .. ' - ' off_count .. ' times offline, ssid is ' .. current_ssid .. ', change to ' .. offline_ssid)
-          shell_exec('sed -i "s~^ssid=' .. ssid.ssid .. '~ssid=' .. offline_ssid .. '~" ' .. hostapd)
+          os.execute('sed -i "s~^ssid=' .. ssid.ssid .. '~ssid=' .. offline_ssid .. '~" ' .. hostapd)
           hup_needed = 1
         end
       end
@@ -240,7 +209,7 @@ end
 
 if hup_needed == 1 then
   -- send hup to all hostapd to load the new ssid
-  shell_exec('killall -hup hostapd')
+  os.execute('killall -hup hostapd')
   print("hup!")
 end
 

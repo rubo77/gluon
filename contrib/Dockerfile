@@ -20,7 +20,20 @@ RUN apt update && apt install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -d /gluon gluon
+RUN mkdir /gluon
+RUN chown -R gluon:gluon /gluon
+
 USER gluon
+RUN cd /gluon
+RUN git clone https://github.com/rubo77/gluon/ gluon
+RUN cd gluon
 
 VOLUME /gluon
 WORKDIR /gluon
+
+RUN git checkout docker
+RUN cp -a docs/site-example/ site
+RUN luacheck .; if [ $? -gt 0 ]; then exit 1; fi
+RUN ls site/
+RUN make update GLUON_DEPRECATED=0
+RUN make GLUON_TARGET=x86-64 GLUON_DEPRECATED=0

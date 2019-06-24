@@ -110,7 +110,7 @@ if ( tq_limit_enabled == 1 ) then
   --  lower limit, below that the offline ssid will be used
   local tq_limit_min = tonumber(uci:get('gluon-offline-ssid', 'settings', 'tq_limit_min') or '35')
   -- grep the connection quality of the currently used gateway
-  local gateway_tq = util.exec('batctl gwl | grep -e "^=>" -e "^\*" | awk -F \'[()]\' \'{print $2}\' | tr -d " "')
+  local gateway_tq = util.exec('batctl gwl | grep -e "^=>" -e "^%*" | awk -F \'[()]\' \'{print $2}\' | tr -d " "')
   if ( gateway_tq == '' ) then
     -- there is no gateway
     local gateway_tq = 0
@@ -195,7 +195,7 @@ elseif check == 0 then
             logger('misconfiguration: did neither find ssid ' .. ssid.ssid .. ' nor ' .. offline_ssid .. '. please reboot')
           end
       
-          logger(msg .. ' - ' off_count .. ' times offline, ssid is ' .. current_ssid .. ', change to ' .. offline_ssid)
+          logger(msg .. ' - ' .. off_count .. ' times offline, ssid is ' .. current_ssid .. ', change to ' .. offline_ssid)
           os.execute('sed -i "s~^ssid=' .. ssid.ssid .. '~ssid=' .. offline_ssid .. '~" ' .. hostapd)
           hup_needed = 1
         end

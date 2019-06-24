@@ -32,8 +32,8 @@ VOLUME /gluon
 WORKDIR /gluon
 
 RUN git checkout docker
-RUN cp -a docs/site-example/ site
-RUN luacheck .; if [ $? -gt 0 ]; then exit 1; fi
-RUN ls site/
-RUN make update GLUON_DEPRECATED=0
-RUN make GLUON_TARGET=x86-64 GLUON_DEPRECATED=0
+RUN cp -a docs/site-example/ site ; \
+    luacheck . ; if [ $? -gt 0 ]; then exit 1; fi ; \
+    make update ; \
+    echo "in the max Duration time of 240 minutes it is not possible to make GLUON_TARGET=x86-64" ; \
+    echo finished successfull

@@ -1,5 +1,4 @@
 local uci = require('simple-uci').cursor()
-local util = require 'gluon.util'
 
 local pkg_i18n = i18n 'gluon-web-offline-ssid'
 

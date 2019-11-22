@@ -3,16 +3,16 @@
 local uci = require("simple-uci").cursor()
 local util = require 'gluon.util'
 
-function safety_exit(t)
+local function safety_exit(t)
   io.write(t .. ", exiting with error code 2")
   os.exit(2)
 end
 
-function logger(m)
+local function logger(m)
   os.execute('logger -s -t "gluon-offline-ssid" -p 5 "' .. m .. '"')
 end
 
-function file_exists(name)
+local function file_exists(name)
    local f = io.open(name, "r")
    return f ~= nil and io.close(f)
 end
@@ -35,7 +35,7 @@ local first = tonumber(uci:get('gluon-offline-ssid', 'settings', 'first') or '5'
 local prefix = uci:get('gluon-offline-ssid', 'settings', 'prefix') or 'Offline_'
 
 local disabled = uci:get('gluon-offline-ssid', 'settings', 'disabled') == '1' or false
-if disabled then 
+if disabled then
   print("offline-ssid is disabled")
 end
 local phys = { length = 0 }
@@ -91,7 +91,7 @@ local offline_ssid = prefix .. suffix
 -- temp file to count the offline incidents during switch_timeframe
 local tmp = '/tmp/offline-ssid-count'
 local off_count = '0'
-if not file_exists(tmp) then 
+if not file_exists(tmp) then
   assert(io.open(tmp, 'w')):write('0')
 else
   off_count = tonumber(util.readfile(tmp))
@@ -113,7 +113,7 @@ if ( tq_limit_enabled == 1 ) then
   local gateway_tq = util.exec('batctl gwl | grep -e "^=>" -e "^%*" | awk -F \'[()]\' \'{print $2}\' | tr -d " "')
   if ( gateway_tq == '' ) then
     -- there is no gateway
-    local gateway_tq = 0
+    gateway_tq = 0
   end
   msg = "tq is " .. gateway_tq
 
@@ -148,22 +148,21 @@ if check > 0 or disabled then
   -- check status for all physical devices
   for _, ssid in ipairs(ssids) do
     local hostapd = '/var/run/hostapd-' .. ssid.phy .. '.conf'
-    
+
     -- first grep for online-SSID in hostapd file
     if os.execute(ssid_grep .. ssid.ssid .. '" ' .. hostapd) == 0 then
       print("current ssid is correct")
       break
     else
       -- set online
-      
       -- debug: grep for offline_ssid in hostapd file
       if os.execute(ssid_grep .. offline_ssid .. '" ' .. hostapd) ~= 0 then
         logger('misconfiguration: did neither find ssid ' .. ssid.ssid .. ' nor ' .. offline_ssid .. '. please reboot')
       end
-      
+
       local current_ssid = util.trim(util.exec(ssid_grep .. '" ' .. hostapd .. ' | cut -d"=" -f2'))
       -- TODO: replace ~ in current_ssid and ssid.ssid
-      
+
       logger(msg .. ' - ssid is ' .. current_ssid .. ', change to ' .. ssid.ssid)
       os.execute('sed -i "s~^ssid=' .. current_ssid .. '~ssid=' .. ssid.ssid .. '~" ' .. hostapd)
       hup_needed = 1
@@ -174,7 +173,7 @@ elseif check == 0 then
   if up < first or m == 0 then
     -- set ssid offline, only if uptime is less than first or exactly a multiplicative of switch_timeframe
     local t = minutes
-    if up < first then 
+    if up < first then
       t = first
     end
     if off_count >= t / 2 then
@@ -182,20 +181,21 @@ elseif check == 0 then
       for _, ssid in ipairs(ssids) do
         local hostapd = '/var/run/hostapd-' .. ssid.phy .. '.conf'
         local current_ssid = util.trim(util.exec(ssid_grep .. '" ' .. hostapd .. ' | cut -d"=" -f2'))
-        
+
         -- first grep for offline_ssid in hostapd file
         if os.execute(ssid_grep .. offline_ssid .. '" ' .. hostapd) == 0 then
           print('ssid ' .. current_ssid .. ' is correct')
           break
         else
           -- set offline
-          
           -- debug: grep for online-SSID in hostapd file
           if os.execute(ssid_grep .. ssid.ssid .. '" ' .. hostapd) == 0 then
-            logger('misconfiguration: did neither find ssid ' .. ssid.ssid .. ' nor ' .. offline_ssid .. '. please reboot')
+            logger('misconfiguration: did neither find ssid '
+              .. ssid.ssid .. ' nor ' .. offline_ssid .. '. please reboot')
           end
-      
-          logger(msg .. ' - ' .. off_count .. ' times offline, ssid is ' .. current_ssid .. ', change to ' .. offline_ssid)
+
+          logger(msg .. ' - ' .. off_count .. ' times offline, ssid is '
+            .. current_ssid .. ', change to ' .. offline_ssid)
           os.execute('sed -i "s~^ssid=' .. ssid.ssid .. '~ssid=' .. offline_ssid .. '~" ' .. hostapd)
           hup_needed = 1
         end
@@ -203,7 +203,7 @@ elseif check == 0 then
     end
     -- else print("minute ' .. m .. ', just count ' .. off_count .. '")
   end
-  
+
   assert(io.open(tmp, 'w')):write(off_count + 1)
 end
 

@@ -7,7 +7,7 @@ include ../gluon.mk
 
 define Package/$(PKG_NAME)
   TITLE:=adds an option to enable and disable the offline-ssid changer in advanced config mode
-  DEPENDS:=+gluon-core +micrond +gluon-offline-ssid
+  DEPENDS:=+gluon-web-admin +micrond +gluon-offline-ssid
 endef
 
 $(eval $(call BuildPackageGluon,$(PKG_NAME)))
